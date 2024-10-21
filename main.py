@@ -104,17 +104,17 @@ def advanced_search(make, model, province, postal_code, max_results):
 
 
 if __name__ == "__main__":
-    # postal_code = 'M5W%201E6'
-    # province = 'on'
-    # max_results = 500
+    postal_code = 'M5W%201E6'
+    province = 'on'
+    max_results = 500
 
-    # df_crv = advanced_search('honda', 'cr-v', province, postal_code, max_results)
-    # df_rav4 = advanced_search('toyota', 'rav4', province, postal_code, max_results)
-    # df_forester = advanced_search('subaru', 'forester', province, postal_code, max_results)
-    # df_a3 = advanced_search('audi', 'a3', province, postal_code, max_results)
+    df_crv = advanced_search('honda', 'cr-v', province, postal_code, max_results)
+    df_rav4 = advanced_search('toyota', 'rav4', province, postal_code, max_results)
+    df_forester = advanced_search('subaru', 'forester', province, postal_code, max_results)
+    df_q3 = advanced_search('audi', 'q3', province, postal_code, max_results)
 
-    # df = pd.concat([df_crv, df_rav4, df_forester, df_a3])
-    # df.to_csv('search_test.csv')
+    df = pd.concat([df_crv, df_rav4, df_forester, df_q3])
+    df.to_csv('search_test.csv')
 
     df = pd.read_csv('search_test.csv')
 
@@ -140,6 +140,19 @@ if __name__ == "__main__":
     
     fig.show()
     fig.write_image("model_comparison_mileage_price.png")
+
+    fig = px.scatter(df, y="price", x="year", color="odometer", facet_col="model", trendline='ols', trendline_color_override="black")
+    fig.update_traces(marker_size=10)
+    fig.update_layout(
+        title='AutoTraderCa search results on 20/10/2024',
+        yaxis_title="Price (CAD)"    
+    )
+    fig.update_xaxes(title="Year")
+    
+    fig.show()
+    fig.write_image("model_comparison_year_price.png")
+
+
 
 
 
