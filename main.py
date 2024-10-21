@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import pandas as pd 
 import plotly.express as px
 import statsmodels.api as sm
-
+import time
 
 def split_title(title):
     if title:
@@ -82,6 +82,7 @@ def advanced_search(make, model, province, postal_code, max_results):
 
     viewed = len(soup)
     while viewed <= num_results and viewed <= max_results:
+        time.sleep(5)
         page = int(viewed/100)
         soup = get_search(make, model, province, postal_code=postal_code, n_records=100, page=page)
         search_results.extend(soup.find_all('div', class_='result-item'))
@@ -105,19 +106,20 @@ def advanced_search(make, model, province, postal_code, max_results):
 if __name__ == "__main__":
     # postal_code = 'M5W%201E6'
     # province = 'on'
-    # max_results = 1000
+    # max_results = 500
 
-    # df_crv = advanced_search('honda', 'cr-v', province, postal_code, 200)
-    # df_rav4 = advanced_search('toyota', 'rav4', province, postal_code, 200)
-    # df_forester = advanced_search('subaru', 'forester', province, postal_code, 200)
+    # df_crv = advanced_search('honda', 'cr-v', province, postal_code, max_results)
+    # df_rav4 = advanced_search('toyota', 'rav4', province, postal_code, max_results)
+    # df_forester = advanced_search('subaru', 'forester', province, postal_code, max_results)
+    # df_a3 = advanced_search('audi', 'a3', province, postal_code, max_results)
 
-    # df = pd.concat([df_crv, df_rav4, df_forester])
+    # df = pd.concat([df_crv, df_rav4, df_forester, df_a3])
     # df.to_csv('search_test.csv')
 
     df = pd.read_csv('search_test.csv')
 
     df = df.dropna(subset=['odometer','year','price'], axis=0, how='any')
-
+    df = df[df['model']!='A4']
     for model, data in df.groupby("model"):
         print(model)
 
