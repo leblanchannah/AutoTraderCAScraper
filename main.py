@@ -5,6 +5,8 @@ import plotly.express as px
 import statsmodels.api as sm
 import time
 
+from statsmodels.formula.api import ols
+
 def split_title(title):
     if title:
         title = title.split(" ")
@@ -102,26 +104,7 @@ def advanced_search(make, model, province, postal_code, max_results):
 
     return df
 
-
-if __name__ == "__main__":
-    postal_code = 'M5W%201E6'
-    province = 'on'
-    max_results = 2000
-
-    df_crv = advanced_search('honda', 'cr-v', province, postal_code, max_results)
-    df_rav4 = advanced_search('toyota', 'rav4', province, postal_code, max_results)
-    df_forester = advanced_search('subaru', 'forester', province, postal_code, max_results)
-    df_q3 = advanced_search('audi', 'q3', province, postal_code, max_results)
-
-    df = pd.concat([df_crv, df_rav4, df_forester, df_q3])
-    df.to_csv('search_test.csv')
-
-    df = pd.read_csv('search_test.csv')
-
-    df['km_k'] = df['odometer'] / 1000.0
-
-    df = df.dropna(subset=['odometer','year','price'], axis=0, how='any')
-    df = df[df['model']!='A4']
+def ols_by_model(df):
     for model_name, data in df.groupby("model"):
         print(model_name)
 
@@ -134,30 +117,72 @@ if __name__ == "__main__":
         with open(f'ols_summary_{model_name}.txt', 'w') as fh:
             fh.write(model.summary().as_text())
 
-    fig = px.scatter(df, y="price", x="km_k", color="year", facet_col="model", trendline='ols', trendline_color_override="black")
-    fig.update_traces(marker_size=8)
-    fig.update_layout(
-        title='AutoTraderCa search results on 20/10/2024',
-        yaxis_title="Price (CAD)"    
-    )
-    fig.update_xaxes(title="Mileage (km)")
+
+if __name__ == "__main__":
+    # postal_code = 'M5W%201E6'
+    # province = 'on'
+    # max_results = 2000
+
+    # df_crv = advanced_search('honda', 'cr-v', province, postal_code, max_results)
+    # df_rav4 = advanced_search('toyota', 'rav4', province, postal_code, max_results)
+    # df_forester = advanced_search('subaru', 'forester', province, postal_code, max_results)
+    # df_q3 = advanced_search('audi', 'q3', province, postal_code, max_results)
+
+    # df = pd.concat([df_crv, df_rav4, df_forester, df_q3])
+    # df.to_csv('search_test.csv')
+
+    df = pd.read_csv('search_test.csv')
+
+    df['km_k'] = df['odometer'] / 1000.0
+
+    df = df.dropna(subset=['odometer','year','price'], axis=0, how='any')
+    df['mileage_per_yr'] = df.groupby(['model','year'])['km_k'].transform('mean')
+    df['price_per_km'] = df['price'] / df['km_k']
+
+
+
+    # fig = px.scatter(df, y="price", x="km_k", color="year", facet_col="model", trendline='ols', trendline_color_override="black")
+    # fig.update_traces(marker_size=8)
+    # fig.update_layout(
+    #     title='AutoTraderCa search results on 20/10/2024',
+    #     yaxis_title="Price (CAD)"    
+    # )
+    # fig.update_xaxes(title="Mileage (km)")
     
-    fig.show()
-    fig.write_image("model_comparison_mileage_price.png")
+    # fig.show()
+    # fig.write_image("model_comparison_mileage_price.png")
 
-    fig = px.scatter(df, y="price", x="year", color="km_k", facet_col="model", trendline='ols', trendline_color_override="black")
-    fig.update_traces(marker_size=8)
-    fig.update_layout(
-        title='AutoTraderCa search results on 20/10/2024',
-        yaxis_title="Price (CAD)"    
-    )
-    fig.update_xaxes(title="Year")
+    # fig = px.scatter(df, y="price", x="year", color="km_k", facet_col="model", trendline='ols', trendline_color_override="black")
+    # fig.update_traces(marker_size=8)
+    # fig.update_layout(
+    #     title='AutoTraderCa search results on 20/10/2024',
+    #     yaxis_title="Price (CAD)"    
+    # )
+    # fig.update_xaxes(title="Year")
     
-    fig.show()
-    fig.write_image("model_comparison_year_price.png")
+    # fig.show()
+    # fig.write_image("model_comparison_year_price.png")
 
 
+    # fig = px.scatter(df, y="mileage_per_yr", x="year", color="model")
+    # fig.update_traces(marker_size=8)
+    # fig.update_layout(
+    #     title='AutoTraderCa search results on 20/10/2024',
+    #     yaxis_title="km per year"    
+    # )
+    # fig.update_xaxes(title="year")
+    # fig.show()
+
+    df['year_interaction'] = 2024 - df['year']
 
 
+    # Fit regression model with interaction term (Make_Model * Year_Age)
+    model = ols('price ~ year_interaction * model + km_k', data=df).fit()
+
+    # Output regression results
+    print(model.summary())
+
+    with open(f'all_model_w_interaction.txt', 'w') as fh:
+            fh.write(model.summary().as_text())
 
 
