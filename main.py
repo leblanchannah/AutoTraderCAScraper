@@ -106,7 +106,7 @@ def advanced_search(make, model, province, postal_code, max_results):
 if __name__ == "__main__":
     postal_code = 'M5W%201E6'
     province = 'on'
-    max_results = 500
+    max_results = 2000
 
     df_crv = advanced_search('honda', 'cr-v', province, postal_code, max_results)
     df_rav4 = advanced_search('toyota', 'rav4', province, postal_code, max_results)
@@ -118,20 +118,24 @@ if __name__ == "__main__":
 
     df = pd.read_csv('search_test.csv')
 
+    df['km_k'] = df['odometer'] / 1000.0
+
     df = df.dropna(subset=['odometer','year','price'], axis=0, how='any')
     df = df[df['model']!='A4']
-    for model, data in df.groupby("model"):
-        print(model)
+    for model_name, data in df.groupby("model"):
+        print(model_name)
 
-        X = data[['odometer', 'year']]  # Independent variables
+        X = data[['km_k', 'year']]  # Independent variables
         X = sm.add_constant(X)        # Adds a constant term to the predictor
         y = data['price']  
 
         model = sm.OLS(y, X).fit()
         print(model.summary())
+        with open(f'ols_summary_{model_name}.txt', 'w') as fh:
+            fh.write(model.summary().as_text())
 
-    fig = px.scatter(df, y="price", x="odometer", color="year", facet_col="model", trendline='ols', trendline_color_override="black")
-    fig.update_traces(marker_size=10)
+    fig = px.scatter(df, y="price", x="km_k", color="year", facet_col="model", trendline='ols', trendline_color_override="black")
+    fig.update_traces(marker_size=8)
     fig.update_layout(
         title='AutoTraderCa search results on 20/10/2024',
         yaxis_title="Price (CAD)"    
@@ -141,8 +145,8 @@ if __name__ == "__main__":
     fig.show()
     fig.write_image("model_comparison_mileage_price.png")
 
-    fig = px.scatter(df, y="price", x="year", color="odometer", facet_col="model", trendline='ols', trendline_color_override="black")
-    fig.update_traces(marker_size=10)
+    fig = px.scatter(df, y="price", x="year", color="km_k", facet_col="model", trendline='ols', trendline_color_override="black")
+    fig.update_traces(marker_size=8)
     fig.update_layout(
         title='AutoTraderCa search results on 20/10/2024',
         yaxis_title="Price (CAD)"    
